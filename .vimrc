@@ -10,7 +10,7 @@ set ruler
 set tabstop=4
 set shiftwidth=4
 set expandtab
-set fencs=ucs-bom,utf-8,euc-kr.latin1
+set fencs=ucs-bom,utf-8,euc-kr,latin1
 set fileencoding=euc-kr
 "set background=light
 "set background=dark
