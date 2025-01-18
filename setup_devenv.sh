@@ -7,6 +7,8 @@ REPO_DIR=$(pwd)
 EDITOR_DIR="$REPO_DIR/editor"
 TERMINAL_DIR="$REPO_DIR/terminal"
 HOME_DIR="$HOME"
+FORCE=false  # Default value for force option
+VERBOSE=false  # Default value for verbose option
 
 # Default values for editor and terminal
 EDITOR=""
@@ -14,11 +16,13 @@ TERMINAL=""
 
 # Function to display help message
 show_help() {
-    echo "Usage: ./setup_devenv.sh -e [editor] -t [terminal tool]"
+    echo "Usage: ./setup_devenv.sh -e [editor] -t [terminal tool] [-f] [-v]"
     echo ""
     echo "Options:"
     echo "  -e, --editor     Choose the editor to use (Possible values: $(list_options "$EDITOR_DIR"))"
     echo "  -t, --terminal   Choose the terminal tool to use (Possible values: $(list_options "$TERMINAL_DIR"))"
+    echo "  -f, --force      Force create symbolic links by deleting existing files"
+    echo "  -v, --verbose    Enable verbose output (detailed logs)"
     echo "  -h, --help       Display this help message"
     exit 1
 }
@@ -52,11 +56,19 @@ while [[ "$#" -gt 0 ]]; do
             TERMINAL="$2"
             shift 2
             ;;
+        -f|--force)
+            FORCE=true
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
         -h|--help)
             show_help
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Error: Unknown option: $1"
             show_help
             ;;
     esac
@@ -64,19 +76,19 @@ done
 
 # Check if either editor or terminal is specified, if neither then show help
 if [[ -z "$EDITOR" && -z "$TERMINAL" ]]; then
-    echo "Either editor or terminal tool must be specified."
+    echo "Error: You must specify either an editor or terminal tool."
     show_help
 fi
 
 # Check if the specified editor directory exists
 if [[ -n "$EDITOR" && ! -d "$EDITOR_DIR/$EDITOR" ]]; then
-    echo "Unsupported editor: $EDITOR"
+    echo "Error: Unsupported editor '$EDITOR'. Available options: $(list_options "$EDITOR_DIR")"
     show_help
 fi
 
 # Check if the specified terminal directory exists
 if [[ -n "$TERMINAL" && ! -d "$TERMINAL_DIR/$TERMINAL" ]]; then
-    echo "Unsupported terminal tool: $TERMINAL"
+    echo "Error: Unsupported terminal tool '$TERMINAL'. Available options: $(list_options "$TERMINAL_DIR")"
     show_help
 fi
 
@@ -86,17 +98,29 @@ create_symlink() {
     local dest="$2"
 
     if [[ -e "$dest" ]]; then
-        echo "Error: '$dest' already exists. Cannot create symlink."
-        exit 1
+        if [[ "$FORCE" == true ]]; then
+            if [[ "$VERBOSE" == true ]]; then
+                echo "  [INFO] Force option enabled: Deleting existing file '$dest'."
+            fi
+            rm -f "$dest"  # Delete the existing file
+        else
+            echo "  [ERROR] '$dest' already exists. Use -f option to force delete and create symlink."
+            exit 1
+        fi
     fi
 
     ln -s "$src" "$dest"
-    echo "Created symlink: $dest -> $src"
+
+    if [[ "$VERBOSE" == true ]]; then
+        echo "  [SUCCESS] Created symlink: $dest -> $src"
+    fi
 }
 
 # Function to set up the chosen editor
 setup_editor() {
-    echo "Setting up editor ($EDITOR)"
+    if [[ "$VERBOSE" == true ]]; then
+        echo "[INFO] Setting up editor: $EDITOR"
+    fi
     if [[ "$EDITOR" == "neovim" ]]; then
         mkdir -p "$HOME_DIR/.config/nvim"
         create_symlink "$EDITOR_DIR/neovim/init.lua" "$HOME_DIR/.config/nvim/init.lua"
@@ -107,7 +131,9 @@ setup_editor() {
 
 # Function to set up the chosen terminal tool
 setup_terminal() {
-    echo "Setting up terminal tool ($TERMINAL)"
+    if [[ "$VERBOSE" == true ]]; then
+        echo "[INFO] Setting up terminal tool: $TERMINAL"
+    fi
     if [[ "$TERMINAL" == "tmux" ]]; then
         create_symlink "$TERMINAL_DIR/tmux/.tmux.conf" "$HOME_DIR/.tmux.conf"
     elif [[ "$TERMINAL" == "screen" ]]; then
@@ -117,7 +143,9 @@ setup_terminal() {
 
 # Main function to execute the setup
 main() {
-    echo "Starting development environment setup!"
+    if [[ "$VERBOSE" == true ]]; then
+        echo "[INFO] Starting development environment setup..."
+    fi
 
     # If editor is provided, set it up
     if [[ -n "$EDITOR" ]]; then
@@ -129,9 +157,10 @@ main() {
         setup_terminal
     fi
 
-    echo "Setup complete!"
+    if [[ "$VERBOSE" == true ]]; then
+        echo "[INFO] Setup complete!"
+    fi
 }
 
 # Execute the main function
 main
-
