@@ -21,7 +21,9 @@ if exists('+colorcolumn')
   " 'colorcolumn' is optional in small builds; see :help 'colorcolumn'.
   set colorcolumn=100
 endif
-set tags=./tags;,./ctags;
+set tags=./tags;,./ctags;,./rusty-tags.vi;
+set tagrelative
+set cpoptions-=d
 
 if has('clipboard')
   " +clipboard is compile-time optional; see :help +clipboard.

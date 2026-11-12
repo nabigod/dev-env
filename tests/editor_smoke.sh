@@ -95,7 +95,7 @@ run_editor_options() {
         config="$EDITOR_ROOT/vim/.vimrc"
         HOME="$home" "$VIM_BIN" -N -n -i NONE -es -u "$config" "$file_path" \
             -c "redir! > $output_base" \
-            -c 'silent echomsg "opts=" . &number . "," . &autoindent . "," . &cindent . "," . &smartindent . "," . &wrap . "," . &ruler . "," . &tabstop . "," . &shiftwidth . "," . &expandtab . "," . &fileencodings . "," . &fileencoding . "," . &hlsearch . "," . &colorcolumn . "," . &tags . "," . get(g:, "colors_name", "NONE")' \
+            -c 'silent echomsg "opts=" . &number . "," . &autoindent . "," . &cindent . "," . &smartindent . "," . &wrap . "," . &ruler . "," . &tabstop . "," . &shiftwidth . "," . &expandtab . "," . &fileencodings . "," . &fileencoding . "," . &hlsearch . "," . &colorcolumn . "," . &tags . "," . &tagrelative . "," . (&cpoptions =~# "d") . "," . get(g:, "colors_name", "NONE")' \
             -c 'redir END' -c 'qa!' \
             >"$output_base.stdout" 2>"$output_base.stderr" \
             || fail "$editor options invocation failed"
@@ -104,14 +104,15 @@ run_editor_options() {
         HOME="$home" XDG_CONFIG_HOME="$home/config" XDG_DATA_HOME="$home/data" \
             XDG_STATE_HOME="$home/state" "$NVIM_BIN" --headless -u "$config" "$file_path" \
             -c 'sleep 10m' -c "redir! > $output_base" \
-            -c 'silent echomsg "opts=" . &number . "," . &autoindent . "," . &cindent . "," . &smartindent . "," . &wrap . "," . &ruler . "," . &tabstop . "," . &shiftwidth . "," . &expandtab . "," . &fileencodings . "," . &fileencoding . "," . &hlsearch . "," . &colorcolumn . "," . &tags . "," . get(g:, "colors_name", "NONE")' \
+            -c 'silent echomsg "opts=" . &number . "," . &autoindent . "," . &cindent . "," . &smartindent . "," . &wrap . "," . &ruler . "," . &tabstop . "," . &shiftwidth . "," . &expandtab . "," . &fileencodings . "," . &fileencoding . "," . &hlsearch . "," . &colorcolumn . "," . &tags . "," . &tagrelative . "," . (&cpoptions =~# "d") . "," . get(g:, "colors_name", "NONE")' \
             -c 'redir END' -c 'qa!' \
             >"$output_base.stdout" 2>"$output_base.stderr" \
             || fail "$editor options invocation failed"
     fi
     assert_no_editor_error "$output_base"
     assert_file_contains "$output_base" \
-        'opts=1,1,1,1,0,1,4,4,0,ucs-bom,utf-8,euc-kr,latin1,utf-8,1,100,./tags;,./ctags;,jellybeans'
+        'opts=1,1,1,1,0,1,4,4,0,ucs-bom,utf-8,euc-kr,latin1,utf-8,1,100,./tags;,./ctags;,./rusty-tags.vi;,1,0,jellybeans'
+    printf 'PASS: %s editor options preserve tags order and set tagrelative=1, cpoptions_d=0\n' "$editor"
 }
 
 run_editor_transition() {
